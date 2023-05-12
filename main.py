@@ -71,24 +71,6 @@ class GUI(QMainWindow):
 		self.utilityButtonRow = self.createNewUtilityButtonRow()
 		vbox.addLayout(self.utilityButtonRow)
 
-# SECTION: Bottom text
-		self.bottomRow = QHBoxLayout()
-		vbox.addLayout(self.bottomRow)
-
-		self.teamName = QLineEdit()
-		self.teamName.setEnabled(False)
-		self.teamName.setFixedWidth(600)
-		self.teamName.setText("Team name...")
-		self.teamName.setContentsMargins(10,10,300,0)
-		self.bottomRow.addWidget(self.teamName)
-
-		self.loadButton = QPushButton('Load Team')
-		self.loadButton.setFixedWidth(100)
-		self.loadButton.clicked.connect(self.loadTeam)
-		self.loadButton.setStyleSheet("margin-top: 10px;margin-right: 10px;padding: 3px;")
-		self.bottomRow.addWidget(self.loadButton)
-
-
 		self.show()
 
 
@@ -204,8 +186,6 @@ class GUI(QMainWindow):
 			self.initChoices()
 			self.initChooseButtons(True)
 			self.utilityButtonRow.saveButton.setEnabled(True)
-			self.teamName.setText('')
-			self.teamName.setEnabled(True)
 
 
 	def populateAllTeamImgs(self, imgArr, ids):
@@ -218,15 +198,19 @@ class GUI(QMainWindow):
 	def createNewUtilityButtonRow(self):
 		utilityButtonRow = QHBoxLayout()
 
-		utilityButtonsArr = [QPushButton() for i in range(2)]
+		utilityButtonsArr = [QPushButton() for i in range(3)]
 		utilityButtonsArr.append(QComboBox())
 
-		for i in range(3):
+		for i in range(4):
 			if i == 0:
 				utilityButtonsArr[i].setText('Save')
 				utilityButtonsArr[i].clicked.connect(self.saveTeam)
 				utilityButtonsArr[i].setEnabled(False)
 			elif i == 1:
+				utilityButtonsArr[i].setText('Load')
+				utilityButtonsArr[i].clicked.connect(self.loadTeam)
+				utilityButtonsArr[i].setEnabled(True)
+			elif i == 2:
 				utilityButtonsArr[i].setText('Reset')
 				utilityButtonsArr[i].clicked.connect(self.reset)
 			else:
@@ -237,8 +221,9 @@ class GUI(QMainWindow):
 
 		utilityButtonRow.utilityButtonsArr = utilityButtonsArr
 		utilityButtonRow.saveButton = utilityButtonsArr[0]
-		utilityButtonRow.resetButton = utilityButtonsArr[1]
-		utilityButtonRow.modeButton = utilityButtonsArr[2]
+		utilityButtonRow.loadButton = utilityButtonsArr[1]
+		utilityButtonRow.resetButton = utilityButtonsArr[2]
+		utilityButtonRow.modeButton = utilityButtonsArr[3]
 
 		return utilityButtonRow
 
@@ -259,7 +244,7 @@ class GUI(QMainWindow):
 
 
 	def shuffleChoices(self):
-		seen = []
+		seen = [int(i) for i in self.teamIDs]
 
 		for i in range(5):
 			rand = randint(0, len(self.pokedex)-1)
@@ -336,8 +321,6 @@ class GUI(QMainWindow):
 		self.teamIDs = []
 		self.loadedTeams = {}
 		self.utilityButtonRow.saveButton.setEnabled(False)
-		self.teamName.setEnabled(False)
-		self.teamName.setText('Team name...')
 
 
 	def clearUI(self):
@@ -352,18 +335,20 @@ class GUI(QMainWindow):
 	def saveTeam(self):
 		if not os.path.exists('battle_factory_teams'):
 			os.makedirs('battle_factory_teams')
-		teamName = self.teamName.text()
-		if len(teamName) == 0:
-			teamName = 'new_team'
-		with open(f'battle_factory_teams/{teamName}.bft', 'w') as f_out:
+		fileName = QFileDialog.getSaveFileName(self, 'Save File', 'battle_factory_teams/', 'bft')[0]
+		with open(fileName + '.bft', 'w') as f_out:
 			for pokemon in self.teamIDs:
 				print(pokemon, file=f_out)
 
 
 	def loadTeam(self):
 		self.clearUI()
-		with open(f'battle_factory_teams/spencer.bft', 'r') as f_in:
+
+		fileName = QFileDialog.getOpenFileName(self, 'Open File')[0]
+		with open(fileName, 'r') as f_in:
 			count = 0
+			shortName = fileName.split('/')[-1][:-4]
+			self.teamIDs = []
 
 			for line in f_in:
 				pokemon = line.strip()
@@ -374,9 +359,9 @@ class GUI(QMainWindow):
 				if count == 6:
 					break
 
-			self.loadedTeams['spencer'] = [self.teamIDs, self.team]
+			self.loadedTeams[shortName] = [self.teamIDs, self.team]
 
-			teamName = QLineEdit('spencer')
+			teamName = QLineEdit(shortName)
 			teamName.setEnabled(False)
 			self.mainVbox.addWidget(teamName)
 
