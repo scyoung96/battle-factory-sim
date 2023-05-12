@@ -195,7 +195,7 @@ class GUI(QMainWindow):
 			imgArr[i].pixmap = 1
 
 
-	def createNewUtilityButtonRow(self):
+	def createNewUtilityButtonRow(self,teamView=False):
 		utilityButtonRow = QHBoxLayout()
 
 		utilityButtonsArr = [QPushButton() for i in range(3)]
@@ -224,6 +224,9 @@ class GUI(QMainWindow):
 		utilityButtonRow.loadButton = utilityButtonsArr[1]
 		utilityButtonRow.resetButton = utilityButtonsArr[2]
 		utilityButtonRow.modeButton = utilityButtonsArr[3]
+
+		if teamView:
+			utilityButtonRow.modeButton.setVisible(False)
 
 		return utilityButtonRow
 
@@ -314,13 +317,17 @@ class GUI(QMainWindow):
 
 
 	def reset(self):
-		self.initChoices()
-		self.initChooseButtons()
-		self.initTeamImgs()
+		if not self.utilityButtonRow.modeButton.isVisible():
+			self.clearUI()
+			self.initUI()
+		else:
+			self.initChoices()
+			self.initChooseButtons()
+			self.initTeamImgs()
+			self.utilityButtonRow.saveButton.setEnabled(False)
 		self.team = []
 		self.teamIDs = []
 		self.loadedTeams = {}
-		self.utilityButtonRow.saveButton.setEnabled(False)
 
 
 	def clearUI(self):
@@ -368,6 +375,9 @@ class GUI(QMainWindow):
 			newTeamRow = self.createNewTeamRow()
 			self.populateAllTeamImgs(newTeamRow.teamImgArr, self.teamIDs)
 			self.mainVbox.addLayout(newTeamRow)
+
+			self.utilityButtonRow = self.createNewUtilityButtonRow(teamView=True)
+			self.mainVbox.addLayout(self.utilityButtonRow)
 
 
 if __name__ == '__main__':
