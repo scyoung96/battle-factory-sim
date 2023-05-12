@@ -19,7 +19,6 @@ class GUI(QMainWindow):
 		super(GUI,self).__init__()
 
 		self.INACTIVE_STYLE = "background-color: rgb(200, 200, 200)"
-		self.ACTIVE_STYLE = "background-color: none"
 
 		self.mainWidget = None
 		self.mainVbox = None
@@ -34,11 +33,14 @@ class GUI(QMainWindow):
 		self.team = []
 		self.teamIDs = []
 
+		self.teamView = False
+
 		self.initUI()
 
 	def initUI(self):
 		self.setWindowTitle('Battle Factory Sim')
 		self.setWindowIcon(QIcon('img/icon/favicon.png'))
+		self.setFixedSize(700,400)
 
 		self.statusBar = QStatusBar()
 		self.setStatusBar(self.statusBar)
@@ -317,7 +319,7 @@ class GUI(QMainWindow):
 
 
 	def reset(self):
-		if not self.utilityButtonRow.modeButton.isVisible():
+		if self.teamView:
 			self.clearUI()
 			self.initUI()
 		else:
@@ -328,6 +330,7 @@ class GUI(QMainWindow):
 		self.team = []
 		self.teamIDs = []
 		self.loadedTeams = {}
+		self.teamView = False
 
 
 	def clearUI(self):
@@ -343,41 +346,57 @@ class GUI(QMainWindow):
 		if not os.path.exists('battle_factory_teams'):
 			os.makedirs('battle_factory_teams')
 		fileName = QFileDialog.getSaveFileName(self, 'Save File', 'battle_factory_teams/', 'bft')[0]
+		if len(fileName) == 0:
+			return
 		with open(fileName + '.bft', 'w') as f_out:
 			for pokemon in self.teamIDs:
 				print(pokemon, file=f_out)
 
 
 	def loadTeam(self):
-		self.clearUI()
-
 		fileName = QFileDialog.getOpenFileName(self, 'Open File')[0]
-		with open(fileName, 'r') as f_in:
-			count = 0
-			shortName = fileName.split('/')[-1][:-4]
-			self.teamIDs = []
+		shortName = fileName.split('/')[-1][:-4]
 
-			for line in f_in:
-				pokemon = line.strip()
-				self.teamIDs.append(pokemon)
-				self.team.append(natdex_ref[pokemon])
-				count += 1
+		if len(shortName) > 0 and shortName not in self.loadedTeams:
+			if not self.teamView:
+				self.clearUI()
+				# remove the window size constraint
+				self.setFixedSize(16777215, 16777215)
 
-				if count == 6:
-					break
+			with open(fileName, 'r') as f_in:
+				count = 0
+				self.teamIDs = []
 
-			self.loadedTeams[shortName] = [self.teamIDs, self.team]
+				for line in f_in:
+					pokemon = line.strip()
+					self.teamIDs.append(pokemon)
+					self.team.append(natdex_ref[pokemon])
+					count += 1
 
-			teamName = QLineEdit(shortName)
-			teamName.setEnabled(False)
-			self.mainVbox.addWidget(teamName)
+					if count == 6:
+						break
 
-			newTeamRow = self.createNewTeamRow()
-			self.populateAllTeamImgs(newTeamRow.teamImgArr, self.teamIDs)
-			self.mainVbox.addLayout(newTeamRow)
+				# remove utility button row to insert new team in its place
+				if self.teamView:
+					row = self.mainVbox.takeAt(self.mainVbox.count()-1)
+					while row.count():
+						item = row.takeAt(0)
+						item.widget().deleteLater()
+					del row
 
-			self.utilityButtonRow = self.createNewUtilityButtonRow(teamView=True)
-			self.mainVbox.addLayout(self.utilityButtonRow)
+				self.loadedTeams[shortName] = [self.teamIDs, self.team]
+
+				teamName = QLineEdit(shortName)
+				teamName.setEnabled(False)
+				self.mainVbox.addWidget(teamName)
+
+				newTeamRow = self.createNewTeamRow()
+				self.populateAllTeamImgs(newTeamRow.teamImgArr, self.teamIDs)
+				self.mainVbox.addLayout(newTeamRow)
+
+				self.utilityButtonRow = self.createNewUtilityButtonRow(teamView=True)
+				self.mainVbox.addLayout(self.utilityButtonRow)
+				self.teamView = True
 
 
 if __name__ == '__main__':
