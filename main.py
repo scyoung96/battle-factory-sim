@@ -18,7 +18,7 @@ class GUI(QMainWindow):
 	def __init__(self):
 		super(GUI,self).__init__()
 
-		self.INACTIVE_STYLE = "background-color: rgb(200, 200, 200)"
+		self.INACTIVE_STYLE = "background-color: rgb(200, 200, 200);"
 
 		self.mainWidget = None
 		self.mainVbox = None
@@ -154,11 +154,31 @@ class GUI(QMainWindow):
 		teamImgArr = [QLabel() for i in range(6)]
 
 		for i in range(6):
+			widget = QWidget()
+			widget.setFixedSize(100,100)
+
+			col = QStackedLayout()
+
+			button = QPushButton()
+			button.setFixedSize(100,100)
+			button.setFlat(True)
+			button.setStyleSheet("QPushButton{background-color: rgba(255, 255, 255, 0);}QPushButton::pressed{background-color: rgb(0, 200, 126);}")
+			button.clicked.connect(self.selectPKMN)
+
 			teamImgArr[i].setFixedSize(100,100)
 			teamImgArr[i].setPixmap(QPixmap('img/none.png'))
 			teamImgArr[i].setStyleSheet(self.INACTIVE_STYLE)
 			teamImgArr[i].pixmap = None
-			teamRow.addWidget(teamImgArr[i])
+			teamImgArr[i].button = button
+
+			col.addWidget(teamImgArr[i])
+			col.addWidget(button)
+			col.setStackingMode(QStackedLayout.StackingMode.StackAll)
+
+			widget.setLayout(col)
+			widget.layout().setContentsMargins(0,0,0,0)
+
+			teamRow.addWidget(widget)
 
 		teamRow.teamImgArr = teamImgArr
 
@@ -195,6 +215,8 @@ class GUI(QMainWindow):
 			img = QPixmap('img/sprites/' + ids[i])
 			imgArr[i].setPixmap(img.scaled(100,100))
 			imgArr[i].pixmap = 1
+			imgArr[i].id = ids[i]
+			imgArr[i].button.id = ids[i]
 
 
 	def createNewUtilityButtonRow(self,teamView=False):
@@ -354,7 +376,7 @@ class GUI(QMainWindow):
 
 
 	def loadTeam(self):
-		fileName = QFileDialog.getOpenFileName(self, 'Open File')[0]
+		fileName = QFileDialog.getOpenFileName(self, 'Open File', 'battle_factory_teams/')[0]
 		shortName = fileName.split('/')[-1][:-4]
 
 		if len(shortName) > 0 and shortName not in self.loadedTeams:
@@ -391,12 +413,21 @@ class GUI(QMainWindow):
 				self.mainVbox.addWidget(teamName)
 
 				newTeamRow = self.createNewTeamRow()
+				newTeamRow.teamName = shortName
 				self.populateAllTeamImgs(newTeamRow.teamImgArr, self.teamIDs)
 				self.mainVbox.addLayout(newTeamRow)
 
 				self.utilityButtonRow = self.createNewUtilityButtonRow(teamView=True)
 				self.mainVbox.addLayout(self.utilityButtonRow)
 				self.teamView = True
+
+
+	def selectPKMN(self):
+		return
+	
+
+	def switchPKMN(self, pkmn1, pkmn2):
+		return
 
 
 if __name__ == '__main__':
