@@ -18,7 +18,9 @@ class GUI(QMainWindow):
 	def __init__(self):
 		super(GUI,self).__init__()
 
+		self.TRANSPARENT_STYLE = "background-color: rgba(255, 255, 255, 0);"
 		self.INACTIVE_STYLE = "background-color: rgb(200, 200, 200);"
+		self.ACTIVE_STYLE = "border: 2px solid rgb(0, 200, 126);"
 
 		self.mainWidget = None
 		self.mainVbox = None
@@ -34,6 +36,7 @@ class GUI(QMainWindow):
 		self.teamIDs = []
 
 		self.teamView = False
+		self.selectedPKMN = None
 
 		self.initUI()
 
@@ -162,7 +165,7 @@ class GUI(QMainWindow):
 			button = QPushButton()
 			button.setFixedSize(100,100)
 			button.setFlat(True)
-			button.setStyleSheet("QPushButton{background-color: rgba(255, 255, 255, 0);}QPushButton::pressed{background-color: rgb(0, 200, 126);}")
+			button.selected = False
 			button.clicked.connect(self.selectPKMN)
 
 			teamImgArr[i].setFixedSize(100,100)
@@ -353,6 +356,7 @@ class GUI(QMainWindow):
 		self.teamIDs = []
 		self.loadedTeams = {}
 		self.teamView = False
+		self.selectedPKMN = None
 
 
 	def clearUI(self):
@@ -423,10 +427,58 @@ class GUI(QMainWindow):
 
 
 	def selectPKMN(self):
-		return
+		button = self.sender()
+		selectionOnSameRow = False
+
+		# only do anything if the button actually contains something
+		try:
+			_id = button.id
+		except AttributeError:
+			return
+		
+		if _id != None:
+			# if button already selected, deselect it
+			if button.selected:
+				self.selectedPKMN = None
+				button.selected = False
+				button.setFlat(True)
+				button.setStyleSheet(self.TRANSPARENT_STYLE)
+			# if button not selected, select it
+			else:
+				# if another button is already selected, deselect it if it is in same row
+				if self.selectedPKMN != None:
+					buttons = []
+					widgets = button.parent().parent().children()
+					for i in widgets:
+						if isinstance(i, QWidget):
+							for j in i.children():
+								if isinstance(j, QPushButton):
+									buttons.append(j)
+					
+					for i in buttons:
+						if i.id == self.selectedPKMN:
+							selectionOnSameRow = True
+							i.selected = False
+							i.setFlat(True)
+							i.setStyleSheet(self.TRANSPARENT_STYLE)
+				# if no other button is selected, select the new one
+				else:
+					selectionOnSameRow = True
+				
+				# if a new pokemon on the same team is selected, select the new one now (or if no pokemon has been selected yet)
+				if selectionOnSameRow:
+					# select the new button
+					self.selectedPKMN = _id
+					button.selected = True
+					button.setFlat(False)
+					button.setStyleSheet(self.ACTIVE_STYLE)
+				
+				else:
+					# TODO: implement switching pokemon between teams
+					pass
 	
 
-	def switchPKMN(self, pkmn1, pkmn2):
+	def switchPKMN(self):
 		return
 
 
